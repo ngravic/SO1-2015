@@ -1,0 +1,83 @@
+<html>
+	<head>
+		<meta charset="UTF-8"> 
+	</head>
+	<body>
+	<h1>Sistemas Operativos I – Práctica 1</h1>
+
+	<ol>
+		<li>
+			<h2>El Jardín Ornamental</h2>
+			<ol type="a">
+				<li>
+					<h3>Por cada molinete entran N_VISITANTES personas, pero al ejecutar el programa (con --nproc 2) es difícil que el resultado sea 2 * N_VISITANTES. Explique a qué se debe esto.</h3>
+					El problema se debe a dos cosas:
+					<ul>
+						<li>La variable <i>visitantes </i>es un recurso global (está compartido por los threads)</li>
+						<li>
+							<p>La instrucción <i>visitantes++ </i>no es una operación atómica en código máquina. Ésta equivale a:</p>
+							<ol>
+								<li>LOAD  %reg%, *visitantes</li>
+								<li>ADD   %reg%, 1</li>
+								<li>STORE *visitantes, %reg%</li>							
+							</ol>
+						</li>
+						<p>Ahora, como <i>visitantes</i> es accedida mediante 2 threads (--nproc 2) puede pasar lo siguiente:</p>
+						<img src="files/img1.png" alt="img"/>
+						<p>T1 y T2 son los threads. El valor entre paréntesis simboliza el valor de <i>visitantes. L </i>hace referencia a la instrucción LOAD, <i>A</i> hace a ADD y S a STORE</p>
+						<p>Como <i>visitantes</i> es accedida desde los 2 threads, puede pasar que mientras una de las llamadas a función no haya terminado de incrementar efectivamente el valor de visitantes, la otra acceda a un estado anterior de la variable provocando que la ejecución de <i>visitantes++ </i>de la primera llamada se pierda. Debido a esto, existieron resultados erróneos</p>
+					</ul>
+				</li>
+				<li>
+					<h3>Ejecute el programa 5 veces con N_VISITANTES igual a 10. ¿El programa dio el resultado correcto siempre? Si esto es así, ¿por qué?</h3>
+					<p>El programa, en las pruebas realizadas, siempre dio el resultado correcto. Esto ocurre por mera casualidad. En la implementación sigue existiendo el mismo problema que antes. La única diferencia es que la cantidad de iteraciones es menor, por lo que el tiempo de ejecución de cada una es menor, por lo que hace menos probable una interrupción de alguna de las 3 instrucciones requeridas para <i>visitantes++</p>
+				</li>
+				<li>
+					<h3>¿Cuál es el mínimo valor que podría imprimir el programa? ¿Bajo qué circunstancia?</h3>
+					<p>El mínimo valor que podría imprimir el programa es 2, con las siguientes condiciones:</p>
+					<img src="files/img2.png" alt="img2" />
+				</li>
+				<li>
+					<h3>Implemente una solución utilizando los mutex que provee la librería de Cilk (Cilk_lockvar).</h3>
+					<span>Ver archivo <a href="files/1d.cilk">1d.cilk</a></span>
+				</li>
+			</ol>
+			<li>
+				<h2>Cena de los filósofos (Dijsktra)</h2>
+				<ol type="a">
+					<li>
+						<h3>Este programa puede terminar en deadlock (ejecútelo con --nproc 5). ¿En qué situación se puede dar?</h3>
+						<p>Este programa termina en deadlock cuando todos los filósofos toman su tenedor derecho. En el momento de tomar el tenedor izquierdo, éste estará en uso por otro filósofo. Entonces ninguno va a soltar el tenedor derecho, y todos van a quedar esperando al tenedor izquierdo, produciéndose un deadlock.</p>
+					</li>
+					<li>
+						<h3>Cansados de no comer los filósofos deciden pensar una solución a su problema. Uno razona que esto no sucedería si alguno de ellos fuese zurdo y tome primero el tenedor de su izquierda. Implemente esta solución y explique por qué funciona.</h3>
+						<span>Ver archivo <a href="files/2b.cilk">2b.cilk</a></span>
+						<p>El tenedor a la derecha del filósofo zurdo sólo va a estar ocupado cuando este comiendo el de su derecha, esto nos dice que cuando este filosofo termine de comer, va a liberar el cubierto. Ahora si el filósofo del de la derecha del zurdo no esta ocupando su tenedor izquierdo, es porque el filósofo de su derecha o el zurdo esta comiendo.</p>
+					</li>
+					<li>
+						<h3>Otro filósofo piensa que tampoco tendrían el problema si todos fuesen diestros pero sólo comiesen a lo sumo N &#8722; 1 de ellos a la vez. Implemente esta solución y explique por qué funciona.</h3>
+						<span>Ver archivo <a href="files/2c.cilk">2c.cilk</a></span>
+						<p>Esta solución funciona porque el deadlock se produce cuando intentan comer los 5 a la vez. Al haber un filósofo que no esta comiendo, el tenedor de su derecha no lo tiene reservado. Por ende, el filósofo de la derecha del que está libre puede agarrar el tenedor de su izquierda, y ceder sus cubiertos al haber finalizado su comida</p>
+					</li>
+				</ol>
+			</li>
+			<li>
+				<h2>El problema de los fumadores (Patil)</h2>
+				<ol type="a">
+					<li>
+						<h3>¿Cómo puede ocurrir un deadlock?</h3>
+						<p>El deadlock puede ocurrir cuando el agente despierta a un proceso dormido. Debido a que es posible que el agente despierte un proceso el cual no necesite los elementos desbloqueados, ahí se puede producir un deadlock.</p>
+						<p><u>Por ejemplo:</u><br />
+						Agente pone a disposición <u>papel</u> y <u>tabaco</u>. Puede ocurrir que el proceso que tiene <u>fósforos</u> tome el <u>papel</u> y el que tiene <u>papel</u> tome el <u>tabaco</u>. El que tiene los <u>fósforos</u> esperará a que le den <u>tabaco</u>, el que tiene <u>papel</u> esperará los <u>fósforos</u> y el que tiene <u>tabaco</u> se quedará esperando los 2 elementos. Ahí todos los elementos estarán bloqueados, y el agente no podrá avanzar.
+						</p>
+					</li>
+					<li>
+						<h3>Implemente una solución y explíquela.</h3>
+						<span>Ver archivo <a href="files/3b.cilk">3b.cilk</a></span>
+						<p>La solución consiste en agregar 3 variables (mesa_tabaco, mesa_fosforos, mesa_papel), para identificar los recursos disponibles en mesa. El fumador, al momento de bloquear los recursos, verifica que los recursos necesarios para fumar estén disponibles, de lo contrario, los desbloquea para que otro fumador intente.</p>
+					</li>
+				</ol>
+			</li>
+		</ol>
+	</body>
+</html>

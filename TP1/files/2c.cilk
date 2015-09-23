@@ -1,0 +1,61 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <cilk-lib.cilkh>
+#include <assert.h>
+#include "semaphore.cilkh"
+
+#define N_FILOSOFOS 5
+#define ESPERA 50000
+
+Cilk_lockvar tenedor[N_FILOSOFOS];
+Semaphore *s;
+
+void pensar(int i)
+{
+   printf("Filosofo %d pensando...\n",i);
+   usleep(random() % ESPERA);
+}
+
+void comer(int i)
+{
+   printf("Filosofo %d comiendo...\n",i);
+   usleep(random() % ESPERA);
+}
+
+void tomar_tenedores(int i)
+{
+   Cilk_lock(tenedor[i]); /* Toma el tenedor a su derecha */
+   Cilk_lock(tenedor[(i + 1) % N_FILOSOFOS]); /* Toma el tenedor a su izquierda */
+}
+
+void dejar_tenedores(int i)
+{
+   Cilk_unlock(tenedor[i]); /* Deja el tenedor de su derecha */
+   Cilk_unlock(tenedor[(i + 1) % N_FILOSOFOS]); /* Deja el tenedor de su izquierda */
+}
+
+cilk void filosofo(int i)
+{
+   for (;;)
+   {
+      SemaphoreP(s);
+      tomar_tenedores(i);
+      comer(i);
+      dejar_tenedores(i);
+      SemaphoreV(s);
+      pensar(i);
+   }
+}
+
+cilk int main ()
+{
+   int i;
+   s = SemaphoreCreate(N_FILOSOFOS - 1);	/*sólo poseen tenedores 4 filósofos a la vez*/
+   for (i = 0; i < N_FILOSOFOS; i++)
+      Cilk_lock_init(tenedor[i]);
+   for (i = 0; i < N_FILOSOFOS; i++)
+      spawn filosofo(i);
+   sync;
+   SemaphoreDestroy(s);
+   return 0;
+}

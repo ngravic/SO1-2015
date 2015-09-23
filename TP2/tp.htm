@@ -1,0 +1,202 @@
+<html>
+	<head>
+		<meta charset="UTF-8"> 
+	</head>
+	<body>
+	<h1>Sistemas Operativos I – Práctica 2</h1>
+
+	<ol>
+		<li>
+			<h2>El jardín ornamental</h2>
+			<ol type="a">
+				<li>
+					<h3>Convierta la implementaci ́on Cilk del jardin ornamental dada aqui en una implementacion en paralelo usando OpenMP, 
+						sin proteger la region critica.</h3>
+					<span>Ver archivo <a href="files/1a.c">1a.c</a></span>
+				</li>
+				<li>
+					<h3>Implemente el algoritmo de Lamport para N procesos para proteger la region critica.</h3>
+					<span>Ver archivo <a href="files/1b.c">1b.c</a></span>
+				</li>
+				<li>
+					<h3>Aun si el punto anterior esta bien implementado, el programa puede seguir fallando al ejecutarse en una maquina con varios nucleos. 
+						Explique como la memoria cache puede generar este problema.</h3>
+					<p>Una caché es una memoria de acceso rápido, que guarda temporalmente las últimas informaciones procesadas.</p>
+					<img src="files/img1.jpg"></img>
+					<p>Si observamos la imagen, en un CPU multi-core, el cache L1 es independiente por cada nucleo,
+						 lo que quiere decir que la informacion es independiente entre ellos. 
+						 Por lo tanto puede suceder que el valor de alguna variable se copie en distintas caches L1, 
+						 y al momento de actualizar a memoria la variable sea diferente en los distintos nucleos, produciendose el error.</p>  
+				</li>
+				<li>
+					<h3>Utilice la instruccion de assembler mfence para remediarlo.</h3>
+					<span>Ver archivo <a href="files/1d.c">1d.c</a></span>
+				</li>								
+			</ol>
+		</li>	
+		<li>
+			<h2>Multiplicacion de matrices</h2>
+			<ol type="a">
+				<li>
+					<h3>Implemente en OpenMP la multiplicacion de dos matrices dadas A y B en paralelo. 
+						Compare la performance con la solucion secuencial para matrices cuadradas de tamaño 200x200, 
+						500x500 y 1000x1000. ¿Que relacion aproximada puede inferir entre los tiempos en uno y otro caso?</h3>
+					<span>Ver archivo <a href="files/2a.c">2a.c</a></span>
+					<table border="1">
+						<thead>
+							<tr>
+								<th>Tamaño</th>
+								<th>Secuencial</th>
+								<th>Paralelo</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>200x200</td>
+								<td>0.120977</td>
+								<td>0.095408</td>
+							</tr>
+							<tr>
+								<td>500x500</td>
+								<td>2.245684</td>
+								<td>1.451567</td>
+							</tr>
+							<tr>
+								<td>1000x1000</td>
+								<td>30.782165</td>
+								<td>15.468321</td>
+							</tr>
+						</tbody>
+					</table>
+					<p>En todos los casos, la version paralela fue mas rapida que la secuencial, hasta casi el 50% (es más notorio con matrices más grandes)</p>
+				</li>
+				<li>				
+					<h3>Si se cambia el orden de los indices, ¿se puede mejorar el rendimiento? Por que? </h3>
+					Si, totalmente. Esto se debe a 2 cosas:</br> La primera a una politica de extraccion de la cache llamada con prebusqueda, que cuando se hace referencia al
+					 bloque i-ésimo de memoria principal, se trae además el bloque (i+1)-ésimo.</br>
+					 La segunda se debe que justamente, al cambiar los indices, se multiplican posiciones aledañas al arreglo, haciendo mas rapida la operacion (ya que 
+					 la posicion siguiente ya se encuentra en cache).					 
+				</li>				
+				<li>
+					<h3>Si tuviese que computar la multiplicacion de A × B<sup>T</sup>, ¿se puede mejorar el rendimiento? ¿Por que?</h3>
+					<p>Si, se puede mejorar el rendimiento, porque se podria recorrer el arreglo B de manera secuncial y asi aprovechar lo explicado en el punto anterior.</p>
+				</li>
+			</ol>
+		</li>
+		<li>
+			<h2>Busqueda del minimo</h2>
+			<ol type="a">				
+				<li>
+					<h3>Escriba utilizando OpenMP un algoritmo que dado un arreglo de N = 50000000 enteros busque el minimo. 
+						Compare la performance con la implementacion secuencial usando omp_get_wtime() y distinto numero de hilos.</h3>
+					<span>Ver archivo <a href="files/3a.c">3a.c</a></span>
+					<table border="1">
+						<thead>
+							<tr>
+								<th>Secuencial</th>
+								<th>2 threads</th>
+								<th>4 threads</th>
+								<th>8 threads</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr>
+								<td>0.207263</td>
+								<td>0.136020</td>
+								<td>0.094589</td>
+								<td>0.101023</td>
+							</tr>
+						</tbody>
+					</table>
+					<p>La performance de la version paralela fue superior a diferencia de la secuencial. Ademas se puede observar que la velocidad maxima se alcanza
+					cuando se crean la misma cantidad de threads que CPUs (fue probado en una PC de 4 CPUs), luego va aumentando levemente debido al costo de 
+					mantenimiento de muchos threads.</p>
+				</li>
+			</ol>
+		</li>
+		<li>
+			<h2>Quicksort</h2>
+			<ol type="a">
+				<li>
+					<h3>El quicksort del programa anterior es mas lento que el secuencial para casi cualquier tamano de arreglo.
+						 No solo eso, para arreglos de mas de cierto tamano empieza a fallar aunque la version  secuencial termina normalmente. ¿A que se debe esto?</h3>
+					 <p>La falla se encuentra en que ante cada llamada recursiva se crean dos threads nuevos. Es decir, que en cada division del arreglo 
+						 se crean 2 threads (tam threads = ~ 2x el tamaño del arreglo). Es decir que si tenemos un arreglo de 5000 elementos, 
+						 se crearan aproximadamente 10000 threads, algo totalmente insostenible.</p>
+				</li>
+				<li>
+					<h3>Implemente una version en PThreads que, aprovechando los varios nucleos de la maquina, ejecute rapido que la secuencial 
+						sin importar el tamaño del arreglo.</h3>
+					<span>Ver archivo <a href="files/4b.c">4b.c</a></span>
+				</li>
+			</ol>
+		</li>
+		<li>
+			<h2>Lectores y Escritores (Parnas)</h2>
+			<ol type="a">
+				<li>
+					<h3>En el codigo no hay ningun tipo de sincronizacion. Implemente una solucion utilizando variables de condicion de POSIX 
+						(phtread_cond_t) y expliquela.</h3>
+					<span>Ver archivo <a href="files/5a.c">5a.c</a></span>
+					<p>
+						Para solucionar el problema de sicronizacion se agregaron variables mutex y de condicion.
+						Esta nueva implementacion crea una cola de espera y cada entidad (escritor y lector) solo podra efectuar su actividad 
+						si la otra entidad no esta activa, es decir, si el escritor esta escribiendo el lector no podra leer, y visceversa.						
+					</p>
+				</li>
+			</ol>			
+		</li>
+		<li>
+			<h2>Lectores y Escritores II</h2>
+			<ol type="a">
+				<li>
+					<h3>
+					En el problema anterior la unica restriccion que tienen los lectores es que no pueden acceder al arreglo si hay un escritor escribiendo. 
+					Esto puede traer un problema si el numero de lectores es grande y tratan de leer continuamente el arreglo: si un escritor quiere modificar 
+					el arreglo y hay lectores leyendo, puede quedar esperando eternamente si a medida que los lectores terminan de leer son reemplazados por 
+					nuevos lectores. Modifique la solucion anterior de manera que cuando un escritor quiera escribir, los lectores que estan leyendo terminen 
+					su lectura pero no se puedan empezar nuevas lecturas hasta que el escritor escriba. Explique el funcionamiento de la modificacion.
+					</h3>
+					<span>Ver archivo <a href="files/6a.c">6a.c</a></span>
+					<p>El unico cambio que se efectuo fue el de la variable <code>n_writing = 1;</code> fuera del <code>while(n_reading)</code>.</br>
+					Anteriormente <var>n_writing</var> servia para indicar que se estaba escribiendo, ahora, advierte que va a escribir.
+					</p>
+				</li>
+				
+			</ol>
+		</li>
+		<li>
+			<h2>El Problema del Barbero (Dijkstra)</h2>
+			<ol type="a">
+				<li>
+					<h3>Escriba un programa que coordine el comportamiento del barbero y los clientes y expliquelo.</h3>
+					<span>Ver archivo <a href="files/7a.c">7a.c</a></span>
+					<p>		
+						En la solucion hay 2 funciones principales, la del barbero <code>barber</code> y la del cliente 
+						<code>customer</code>.</br><u>La logica del barbero es la siguiente:</u> Se fija si hay clientes, si hay, elige al que esta primero 
+						en la cola de espera (Cuyo indice esta en <var>next</var>) y le corta el cabello. Una vez finalizado, le da la orden al cliente de 
+						trabajo finalizado y repite el proceso. Si no hay clientes, se duerme y espera a que llegue algun cliente.</br>
+						<u>Por ultimo la logica del cliente es la siguiente:</u> El cliente entra en la barberia, si no hay mas lugar, se retira. De lo contrario
+						se coloca en la cola de espera hasta ser atendido. Luego, una vez que el barbero le da la orden de trabajo finalizado, se retira.
+					</p>					
+				</li>
+			</ol>	
+		</li>
+		<li>
+			<h2>Servidor de Eco</h2>
+			<ol type="a">
+				<li>
+					<h3>El servidor actualmente puede atender a un cliente a la vez. Utilizando POSIX Threads conviertalo en un servidor que atienda multiples
+						clientes a la vez creando un hilo para cada cliente
+					</h3>
+					<span>Ver archivo <a href="files/8a.c">8a.c</a></span>
+				</li>
+				<li>
+					<h3>En su solucion hay variables compartidas entre los hilos? Si es asi, asegurese de proteger su acceso</h3>
+					<p>La unica variable compartida es la ID del cliente, y se protegio su acceso con <code>pthread_mutex_lock()</code></p>
+				</li>
+			</ol>
+		</li>
+	</ol>
+	</body>
+</html>

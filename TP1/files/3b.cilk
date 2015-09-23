@@ -1,0 +1,112 @@
+//Ejecutar con 4 threads
+
+#include <stdio.h>
+#include <stdlib.h>
+#include "semaphore.cilkh"
+
+int mesa_tabaco = 0, mesa_papel = 0, mesa_fosforos = 0;
+
+Semaphore *tabaco;
+Semaphore *papel;
+Semaphore *fosforos;
+Semaphore *otra_vez;
+
+void agente()
+{
+    for (;;) {
+        int caso = random() % 3;
+        SemaphoreP(otra_vez);
+        switch (caso) {
+            case 0:
+                mesa_fosforos = 0;
+				mesa_tabaco = mesa_papel = 1;								
+                SemaphoreV(tabaco);
+                SemaphoreV(papel);
+                break;
+            case 1:
+				mesa_papel = 0;
+                mesa_tabaco = mesa_fosforos = 1;								
+                SemaphoreV(fosforos);
+                SemaphoreV(tabaco);
+                break;
+            case 2:
+				mesa_tabaco = 0;
+				mesa_papel = mesa_fosforos = 1;				
+                SemaphoreV(papel);
+                SemaphoreV(fosforos);
+                break;
+        }
+    }
+}
+
+void fumar(int fumador)
+{
+	printf("Fumador %d, fumando...\n", fumador);
+    sleep(1);
+}
+
+/* Tiene fosforos */
+cilk void fumador1()/
+{
+    for (;;) 
+	{
+		SemaphoreP(tabaco);
+		if(mesa_papel)
+		{
+			SemaphoreP(papel);
+			fumar(1);
+			SemaphoreV(otra_vez);
+		}
+		else
+			SemaphoreV(tabaco);
+    }
+}
+
+/* Tiene papel */
+cilk void fumador2()
+{
+    for (;;) 
+	{
+        SemaphoreP(fosforos);
+		if(mesa_tabaco)
+		{
+        	SemaphoreP(tabaco);
+        	fumar(2);
+        	SemaphoreV(otra_vez);
+    	}
+		else
+			SemaphoreV(fosforos);
+	}
+}
+
+/* Tiene tabaco */
+cilk void fumador3()
+{
+    for (;;) 
+	{
+        SemaphoreP(papel);
+		if(mesa_fosforos)
+		{        
+			SemaphoreP(fosforos);
+        	fumar(3);
+        	SemaphoreV(otra_vez);
+    	}
+		else
+			SemaphoreV(papel);
+	}
+}
+cilk int main()
+{
+    tabaco = SemaphoreCreate(0);
+    papel = SemaphoreCreate(0);
+    fosforos = SemaphoreCreate(0);
+    otra_vez = SemaphoreCreate(1);
+
+	spawn fumador1();
+    spawn fumador2();
+    spawn fumador3();
+    agente();
+
+	sync;
+    return 0;
+}

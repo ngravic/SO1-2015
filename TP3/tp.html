@@ -1,0 +1,177 @@
+<html>
+	<head>
+		<meta charset="UTF-8"> 
+	</head>
+	<body>
+	<h1>Sistemas Operativos I – Práctica 3</h1>
+        <ol>
+            <li>
+                <h2>Ejercicio introductorio</h2>
+                <span>Ver código en <a href='files/intro.erl'>intro.erl</a></span>
+                <ol type="a">
+                    <li>
+                        <h3>Explique justificando cuales match's de la funcion match_test/0 deberian ser validos y cuales no.</h3>
+                        <p>Veamos la función <code>match_test()</code>:</p>
+                        <code>match_test () -> </code><br />
+                        <code>  {A,B} = {5,4}, </code><br />
+                        <code>  {C,C} = {5,4}, </code><br />
+                        <code>  {B,A} = {4,5}, </code><br />
+                        <code>  {D,D} = {5,5}. </code><br />
+                        <p>En un principio, como ninguna variable está asignada, <code>{A, B} = {5, 4}</code> 
+                            realiza la operación de asignar a <code>A</code> y <code>B</code>, 5 y 4 respectivamente.</p>
+                        <p>En la siguiente línea, primero asigna <code>C = 5</code> y luego hace pattern matching con <code>C = 4</code>,
+                            lanzando una excepción.</p>
+                        <p>En la 3º línea, hace pattern matching con <code>{B, A}</code> y <code>{4, 5}</code>, lo que es correcto, 
+                            ya que en un principio, se asignó a <code>A = 5</code> y <code>B = 4</code></p>
+                        <p>Por último, en la 4º línea, primero se asigna <code>D = 5</code> y luego se hace pattern matching con <code>D = 4</code>
+                        lo que es correcto.</p>
+                        <p>En resumen:</p>
+                        <table border='1'>
+                            <thead style="font-weight: bold">
+                                <tr>
+                                    <td>Operación</td>
+                                    <td>Resultado</td>
+                                </tr>
+                            </thead>             
+                            <tbody>
+                                <tr>
+                                    <td>Asigna A = 5, B = 4</td>
+                                    <td>Correcto</td>
+                                </tr>
+                                <tr>
+                                    <td>Asigna C = 5, PM C = 4</td>
+                                    <td>Error de PM</td>
+                                </tr>
+                                <tr>
+                                    <td>PM B = 4, A = 5</td>
+                                    <td>Correcto</td>                                        
+                                </tr>
+                                <tr>
+                                    <td>Asigna D = 5, PM D = 5</td>
+                                    <td>Correcto</td>
+                                </tr>                                    
+                            </tbody>
+                        </table>
+                    </li>
+                    <li>
+                        <h3>Implemente las funciones <code>nombre/1</code> y <code>apellido/1</code> para que devuelvan esos
+                            campos de las tuplas que obtienen como argumento utilizando pattern matching.</h3>
+                        <code>apellido (P) -></code></br>
+                        <code style="margin-left:3em">{persona, _, {apellido, PP}} = P, PP.</code></br>
+                        <code>nombre (P) -> </code></br>
+                        <code style="margin-left:3em">  {persona, {nombre, PP}, _} = P, PP.</code>
+                    </li>
+                    <li>
+                        <h3>Explique el resultado de cada una de las comparaciones de la funcion <code>string_test/0</code>
+                            (es decir por que dan true o false).</h3>
+                        <ul>
+                            <li>
+                                <code>helloworld == 'helloworld'</code>: <b>true</b>
+                                <p>Ambos son átomos y poseen el mismo nombre</p>
+                            </li>
+                            <li>
+                                <code>"helloworld" < 'helloworld'</code>: <b>false</b>
+                                <p><var>"helloworld"</var> es string y <var>'helloworld'</var> es átomo. Según el criterio de ordenación de Erlang, string es mayor a átomo</p>
+                            </li>
+                            <li>
+                                <code>helloworld == "helloworld"</code>: <b>false</b>
+                                <p><var>"helloworld"</var> es string y <var>'helloworld'</var> es átomo. Son de distinto tipo</p>
+                            </li>
+                            <li>
+                                <code>[$h,$e,$l,$l,$o,$w,$o,$r,$l,$d] == "helloworld"</code>: <b>true</b>
+                                <p><var>[$h,$e,$l,$l,$o,$w,$o,$r,$l,$d]</var> es una cadena de caracteres y <var>"helloworld"</var> un string. Erlang considera al string 
+                                como cadena de caracteres, por lo tanto tienen el mismo tipo y además el mismo contenido</p>
+                            </li>
+                            <li>
+                                <code>[104,101,108,108,111,119,111,114,108,100] < {104,101,108,108,111,119,111,114,108,100}</code>: <b>false</b>
+                                <p><var>[104,101,108,108,111,119,111,114,108,100]</var> es una lista y <var>{104,101,108,108,111,119,111,114,108,100}</var> es una 
+                                tupla. Según el criterio de ordenación de Erlang, tupla es menor a lista.</p>
+                            </li>
+                            <li>
+                                <code>[104,101,108,108,111,119,111,114,108,100] > 1</code>: <b>true</b>
+                                <p><var>[104,101,108,108,111,119,111,114,108,100]</var> es de tipo lista y <var>1</var> es de tipo number.
+                                Según el criterio de ordenación de Erlang, number es menor a lista.</p>
+                            </li>
+                            <li>
+                                <code>[104,101,108,108,111,119,111,114,108,100] == "helloworld"</code>: <b>true</b>
+                                <p><var>[104,101,108,108,111,119,111,114,108,100]</var> es de tipo lista y <var>"helloworld"</var> es de tipo string.
+                                En este caso Erlang, considera a la lista, como una lista de caracteres, y como la lista de caracteres es lo mismo 
+                                que el string, y además como los caracteres son iguales, la comparación es válida.</p>                                
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h3>Implemente la funcion <code>filtrar_por_apellido/2</code> para que devuelva los nombres (sin el apellido) 
+                            de las personas de la lista Personas cuyo apellido coincide con Apellido utilizando comprension de listas.</h3>
+                        <code>
+                            [X || X <- Personas, apellido(X) == Apellido ].
+                        </code>
+                    </li>
+                </ol>
+            </li>
+            <li>
+                <h2>Temporizacion en Erlang</h2>
+                <span>Ver código en <a href='files/timer_example.erl'>timer_example.erl</a></span>
+            </li>
+            <li>
+                <h2>Servidor de Eco Revisitado</h2>
+                <span>Ver código en <a href='files/eco.erl'>eco.erl</a></span>
+                <ul>
+                    <li>
+                        <h3>Compare el servidor en PThreads y el actual con el cliente dado anteriormente, para 200,
+                        2000 y 20000 conexiones simultaneas.<br />
+                        ¿Ve una diferencia importante en el consumo de memoria de los dos servidores? ¿A que cree que se puede deber?</h3>
+                        <p>Para 200, 2000 practicamente no hay diferencia. Para 20000 clientes se nota un mayor uso de memoria por parte del server
+                        de C, como se observa a continuacion:</p>
+                        <table>
+                            <tr>
+                                <td>
+                                    <a href="files/c_mem.png" target="_blank"><img src="files/c_mem.png" height="200" /></a>
+                                </td>
+                                <td>
+                                    <a href="files/erl_mem.png" target="_blank"><img src="files/erl_mem.png" height="200" /></a>
+                                </td>
+                            </tr>
+                        </table>
+                        <cite>(Se midió el consumo de memoria virtual)</cite>                                                    
+                    </li>
+                    <li>
+                        <h3>¿Puede cada servidor aceptar 50000 conexiones simultaneas?</h3>
+                        <p>El server de Erlang soportó 50000 conexiones sin problemas, 
+                            mientras que el de C quedó colgado en alrededor de 31000 conexiones</p>
+                    </li>
+                </ul>
+            </li>
+            <li>
+                <h2>Lanzar procesos en anillos</h2>
+                <ul>
+                    <li>
+                        <h3>Escriba un programa que lance N procesos en anillos.</h3>
+                        <p>Ver código en <a href='files/ring_a.erl'>ring_a.erl</a></p>
+                    </li>
+                    <li>
+                        <h3>Modifique el programa para que el mensaje enviado gire una vez alrededor del anillo y sea descartado por el que inicio
+                            el envio.</h3>
+                        <p>Ver código en <a href='files/ring_b.erl'>ring_b.erl</a></p>
+                    </li>
+                </ul>                
+            </li>
+            <li>
+                <h2>Broadcaster</h2>                
+                <p>Ver código en <a href='files/broadcast.erl'>broadcast.erl</a></p>
+            </li>                
+            <li>
+                <h2>Sincronizacion en Erlang</h2>
+                <p>Ver código en <a href='files/synch.erl'>synch.erl</a></p>
+            </li>
+            <li>
+                <h2>Hello Tolerante a Fallas</h2>
+                <p>Ver código en <a href='files/hello.erl'>hello.erl</a></p>
+            </li>
+            <li>
+                <h2>Reemplazando modulos</h2>
+                <p>Ver código en <a href='files/replace.erl'>replace.erl</a></p>
+            </li>
+        </ol>
+	</body>
+</html>

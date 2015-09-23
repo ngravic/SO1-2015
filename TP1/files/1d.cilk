@@ -1,0 +1,27 @@
+#include <stdlib.h>
+#include <cilk-lib.cilkh>
+
+#define N_VISITANTES 100000
+
+Cilk_lockvar A;
+int visitantes;
+
+cilk void molinete() 
+{	
+	int i;	
+	for(i = 0; i < N_VISITANTES; i++) {
+		Cilk_lock(A);
+		visitantes++;
+		Cilk_unlock(A);
+	}	
+}
+
+cilk int main() 
+{
+	Cilk_lock_init(A);
+	spawn molinete();
+	spawn molinete();
+	sync;
+	printf("%d visitantes \n", visitantes);
+	return 0;
+}
